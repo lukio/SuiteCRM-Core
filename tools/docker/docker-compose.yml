@@ -1,0 +1,50 @@
+version: "3.8"
+services:
+  mysql-server:
+    image: mysql:5.7
+    container_name: mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+    volumes:
+      - mysql-server-data:/var/lib/mysql
+      - mysql-server-log:/var/log/mysql
+    command: ["mysqld", "--default_authentication_plugin=mysql_native_password"]
+    cap_add:
+      - SYS_NICE  # CAP_SYS_NICE
+  suitecrm:
+    container_name: suitecrm
+    hostname: suitecrm
+    build:
+      context: "${context}"
+      dockerfile: Dockerfile
+    ports:
+      - "${GCA_PORT_IN}:${GCA_PORT_OUT}"
+    volumes:
+      - "${gca_directory}:${gca_docker_directory}"
+      - "${prv_key}:/root/.ssh/id_rsa:ro"
+      - "${pub_key}:/root/.ssh/id_rsa.pub:ro"
+    links:
+      - mysql-server
+    depends_on:
+      - mysql-server
+    environment:
+      HOST_USER: "${USER}"
+      DATABASE_DRIVER: "${DATABASE_DRIVER}"
+      DATABASE_NAME: "${DATABASE_NAME}"
+      DATABASE_HOST: "${DATABASE_HOST}"
+      DATABASE_USER: "${DATABASE_USER}"
+      DATABASE_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      INSTANCE_URL: "${INSTANCE_URL}"
+      INSTANCE_ADMIN_USER: "${INSTANCE_ADMIN_USER}"
+      INSTANCE_ADMIN_PASSWORD: "${INSTANCE_ADMIN_PASSWORD}"
+      INSTANCE_CLIENT_ID: "${INSTANCE_CLIENT_ID}"
+      INSTANCE_CLIENT_SECRET: "${INSTANCE_CLIENT_SECRET}"
+      PROGRESS_DELAY: "${PROGRESS_DELAY}"
+      GCA_DOCKER_DIRECTORY: "${gca_docker_directory}"
+      GCA_HOST: "${GCA_HOST}"
+      GCA_PORT_IN: "${GCA_PORT_IN}"
+volumes:
+  mysql-server-data:
+    name: "mysql-server-data"
+  mysql-server-log:
+    name: "mysql-server-log"
